@@ -1,7 +1,7 @@
 package main
 
 import (
-    "os"
+    //"os"
     "net"
     "encoding/json"
 
@@ -9,6 +9,7 @@ import (
     "github.com/chepeftw/treesiplibs"
 	"github.com/chepeftw/bchainlibs"
 
+	"os"
 )
 
 
@@ -32,41 +33,51 @@ var done = make(chan bool)
 
 
 func sendMessage(payload bchainlibs.Packet) {
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel output")
 	bchainlibs.SendGeneric( output, payload, log )
 }
 
 func sendBlockchain(payload bchainlibs.Packet) {
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel blockchain")
 	bchainlibs.SendGeneric( blockchain, payload, log )
 }
 
 func sendMiner(payload bchainlibs.Packet) {
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel miner")
 	bchainlibs.SendGeneric( miner, payload, log )
 }
 
 
 // Function that handles the output channel
 func attendOutputChannel() {
+	log.Debug("Starting output channel")
 	bchainlibs.SendToNetwork( bchainlibs.BroadcastAddr, bchainlibs.RouterPort, output, true, log , me )
 }
 
 func attendBlockchainChannel() {
+	log.Debug("Starting blockchain channel")
 	bchainlibs.SendToNetwork( me.String(), bchainlibs.BlockCPort, blockchain, false, log, me )
 }
 
 func attendMinerChannel() {
+	log.Debug("Starting miner channel")
 	bchainlibs.SendToNetwork( me.String(), bchainlibs.MinerPort, miner, false, log, me )
 }
 
 
 // Function that handles the buffer channel
 func attendInputChannel() {
-
+	log.Debug("Starting input channel")
     for {
 	j, more := <-input
 	if more {
 	    // First we take the json, unmarshal it to an object
 	    payload := bchainlibs.Packet{}
 	    json.Unmarshal([]byte(j), &payload)
+
+		//log.Debug("---------------------------")
+		//log.Debug("Something arrived")
+		//log.Debug(j)
 
 		source := payload.Source
 		tid := payload.TID
@@ -75,6 +86,7 @@ func attendInputChannel() {
 
 		case bchainlibs.InternalUBlockType:
 			if eqIp( me, source ) {
+				log.Debug("Receiving InternalUBlockType Packet")
 				payload.Type = bchainlibs.UBlockType
 				forwarded["u"+tid] = true
 				sendMessage( payload )
@@ -83,6 +95,7 @@ func attendInputChannel() {
 
 		case bchainlibs.InternalVBlockType:
 			if eqIp( me, source ) {
+				log.Debug("Receiving InternalVBlockType Packet")
 				payload.Type = bchainlibs.VBlockType
 				forwarded["v"+tid] = true
 				sendMessage( payload )
@@ -91,6 +104,7 @@ func attendInputChannel() {
 
 		case bchainlibs.UBlockType:
 			if _, ok := forwarded[ "u"+tid ]; !ok && !eqIp( me, source ) {
+				log.Debug("Receiving UBlockType Packet")
 				forwarded[ "u"+tid ] = true
 				sendMiner( payload )
 				sendMessage( payload )
@@ -99,6 +113,7 @@ func attendInputChannel() {
 
 		case bchainlibs.VBlockType:
 			if _, ok := forwarded[ "v"+tid ]; !ok && !eqIp( me, source ) {
+				log.Debug("Receiving VBlockType Packet")
 				forwarded[ "v"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
@@ -109,12 +124,14 @@ func attendInputChannel() {
 
 		case bchainlibs.LastBlockType:
 			if eqIp( me, source ) {
+				log.Debug("Receiving LastBlockType Packet")
 				sendMiner( payload )
 			}
 		break
 
 		case bchainlibs.QueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok && !eqIp( me, source ) {
+				log.Debug("Receiving QueryType Packet")
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
@@ -148,6 +165,7 @@ func main() {
     c.GetConf( confPath )
 
     targetSync := c.TargetSync
+    //targetSync := float64(0)
 
     // Logger configuration
 	f := bchainlibs.PrepareLog( "router" )
