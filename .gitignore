@@ -16,3 +16,4 @@
 router
 
 .idea/*
+*.log
