@@ -10,6 +10,7 @@ import (
 	"github.com/chepeftw/bchainlibs"
 
 	"os"
+	"time"
 )
 
 
@@ -138,6 +139,10 @@ func attendInputChannel() {
 			}
 		break
 
+		case bchainlibs.InternalPong:
+			log.Info("Receving PONG = " + tid)
+		break
+
 		}
 
 	} else {
@@ -153,6 +158,17 @@ func eqIp( a net.IP, b net.IP ) bool {
     return treesiplibs.CompareIPs(a, b)
 }
 
+func pingInternals() {
+	time.Sleep(time.Second * time.Duration(2))
+
+	payload := bchainlibs.AssemblePing( me )
+	sendBlockchain( payload )
+
+	time.Sleep(time.Second * time.Duration(1))
+
+	payload = bchainlibs.AssemblePing( me )
+	sendMiner( payload )
+}
 
 
 func main() {
@@ -165,10 +181,10 @@ func main() {
     c.GetConf( confPath )
 
     targetSync := c.TargetSync
-    //targetSync := float64(0)
+	logPath := c.LogPath
 
     // Logger configuration
-	f := bchainlibs.PrepareLog( "router" )
+	f := bchainlibs.PrepareLog( logPath, "router" )
 	defer f.Close()
 	backend := logging.NewLogBackend(f, "", 0)
 	backendFormatter := logging.NewBackendFormatter(backend, bchainlibs.LogFormat)
@@ -205,6 +221,8 @@ func main() {
 	// Run the Internal channel! The direct messages to the app layer
 	go attendBlockchainChannel()
 	go attendMinerChannel()
+
+	go pingInternals()
 
     buf := make([]byte, 1024)
 
