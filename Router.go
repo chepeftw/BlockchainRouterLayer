@@ -1,17 +1,14 @@
 package main
 
 import (
-    //"os"
-    "net"
+	"os"
+	"net"
+	"time"
     "encoding/json"
 
     "github.com/op/go-logging"
     "github.com/chepeftw/treesiplibs"
 	"github.com/chepeftw/bchainlibs"
-
-	"os"
-	"time"
-	"fmt"
 )
 
 
@@ -131,6 +128,16 @@ func attendInputChannel() {
 			}
 		break
 
+		case bchainlibs.InternalQueryType:
+			if _, ok := forwarded[ "q"+tid ]; !ok{
+				log.Debug("Receiving QueryType Packet")
+				payload.Type = bchainlibs.QueryType
+				forwarded[ "q"+tid ] = true
+				sendBlockchain( payload )
+				sendMessage( payload )
+			}
+		break
+
 		case bchainlibs.QueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok && !eqIp( me, source ) {
 				log.Debug("Receiving QueryType Packet")
@@ -183,10 +190,6 @@ func main() {
 
     targetSync := c.TargetSync
 	logPath := c.LogPath
-
-	fmt.Println( "Starting from FMT !!!" )
-	fmt.Println( "targetSync = " + string(targetSync) )
-	fmt.Println( "logPath = " + logPath )
 
     // Logger configuration
 	f := bchainlibs.PrepareLog( logPath, "router" )
