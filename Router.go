@@ -11,6 +11,7 @@ import (
 
 	"os"
 	"time"
+	"fmt"
 )
 
 
@@ -182,6 +183,10 @@ func main() {
 
     targetSync := c.TargetSync
 	logPath := c.LogPath
+
+	fmt.Println( "Starting from FMT !!!" )
+	fmt.Println( "targetSync = " + string(targetSync) )
+	fmt.Println( "logPath = " + logPath )
 
     // Logger configuration
 	f := bchainlibs.PrepareLog( logPath, "router" )
