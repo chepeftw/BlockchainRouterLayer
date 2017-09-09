@@ -84,21 +84,21 @@ func attendInputChannel() {
 		switch payload.Type {
 
 		case bchainlibs.InternalUBlockType:
-			if eqIp( me, source ) {
-				log.Debug("Receiving InternalUBlockType Packet")
-				payload.Type = bchainlibs.UBlockType
-				forwarded["u"+tid] = true
-				sendMessage( payload )
-			}
+			//if eqIp( me, source ) {
+			log.Debug("Receiving InternalUBlockType Packet")
+			payload.Type = bchainlibs.UBlockType
+			forwarded["u"+tid] = true
+			sendMessage( payload )
+			//}
 		break
 
 		case bchainlibs.InternalVBlockType:
-			if eqIp( me, source ) {
-				log.Debug("Receiving InternalVBlockType Packet")
-				payload.Type = bchainlibs.VBlockType
-				forwarded["v"+tid] = true
-				sendMessage( payload )
-			}
+			//if eqIp( me, source ) {
+			log.Debug("Receiving InternalVBlockType Packet")
+			payload.Type = bchainlibs.VBlockType
+			forwarded["v"+tid] = true
+			sendMessage( payload )
+			//}
 		break
 
 		case bchainlibs.UBlockType:
@@ -130,7 +130,7 @@ func attendInputChannel() {
 
 		case bchainlibs.InternalQueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok{
-				log.Debug("Receiving QueryType Packet")
+				log.Debug("Receiving InternalQueryType Packet")
 				payload.Type = bchainlibs.QueryType
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
