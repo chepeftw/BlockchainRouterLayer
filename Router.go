@@ -97,6 +97,7 @@ func attendInputChannel() {
 			log.Debug("Receiving InternalVBlockType Packet")
 			payload.Type = bchainlibs.VBlockType
 			forwarded["v"+tid] = true
+			sendBlockchain( payload )
 			sendMessage( payload )
 			//}
 		break
@@ -122,10 +123,10 @@ func attendInputChannel() {
 
 
 		case bchainlibs.LastBlockType:
-			if eqIp( me, source ) {
-				log.Debug("Receiving LastBlockType Packet")
-				sendMiner( payload )
-			}
+			//if eqIp( me, source ) {
+			log.Debug("Receiving LastBlockType Packet")
+			sendMiner( payload )
+			//}
 		break
 
 		case bchainlibs.InternalQueryType:
