@@ -114,6 +114,9 @@ func attendInputChannel() {
 		case bchainlibs.VBlockType:
 			if _, ok := forwarded[ "v"+tid ]; !ok && !eqIp( me, source ) {
 				log.Debug("Receiving VBlockType Packet")
+				// If there are multiple packets from this type, not sure how to make them different
+				// Maybe with a combo with time and packet ID.
+				//log.Info("BLOCK_TIME_RECEIVED=" + string(time.Now().Unix()) + "," + tid)
 				forwarded[ "v"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
@@ -132,6 +135,10 @@ func attendInputChannel() {
 		case bchainlibs.InternalQueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok{
 				log.Debug("Receiving InternalQueryType Packet")
+				// This is the start of the query, which later can be queried in MongoDB as the minimal value of this.
+				// Then compared to the maximun I can get the time it took to propagate.
+				// This is fine cause there is just one query
+				log.Info("QUERY_TIME_RECEIVED=" + string(time.Now().Unix()))
 				payload.Type = bchainlibs.QueryType
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
@@ -142,6 +149,7 @@ func attendInputChannel() {
 		case bchainlibs.QueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok && !eqIp( me, source ) {
 				log.Debug("Receiving QueryType Packet")
+				log.Info("QUERY_TIME_RECEIVED=" + string(time.Now().Unix()))
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
