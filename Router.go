@@ -4,12 +4,12 @@ import (
 	"os"
 	"net"
 	"time"
+	"strconv"
     "encoding/json"
 
     "github.com/op/go-logging"
     "github.com/chepeftw/treesiplibs"
 	"github.com/chepeftw/bchainlibs"
-	"strconv"
 )
 
 
@@ -22,7 +22,6 @@ var me net.IP = net.ParseIP(bchainlibs.LocalhostAddr)
 
 // +++++++++ Routing Protocol
 var forwarded map[string]bool = make(map[string]bool)
-
 
 // +++++++++ Channels
 var input = make(chan string)
@@ -86,41 +85,42 @@ func attendInputChannel() {
 
 		case bchainlibs.InternalUBlockType:
 			//if eqIp( me, source ) {
-			log.Debug("Receiving InternalUBlockType Packet")
 			payload.Type = bchainlibs.UBlockType
 			forwarded["u"+tid] = true
 			sendMessage( payload )
+			log.Debug("Receiving InternalUBlockType Packet")
+			log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
 			//}
 		break
 
 		case bchainlibs.InternalVBlockType:
 			//if eqIp( me, source ) {
-			log.Debug("Receiving InternalVBlockType Packet")
 			payload.Type = bchainlibs.VBlockType
 			forwarded["v"+tid] = true
 			sendBlockchain( payload )
 			sendMessage( payload )
+			log.Debug("Receiving InternalVBlockType Packet")
+			log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
 			//}
 		break
 
 		case bchainlibs.UBlockType:
 			if _, ok := forwarded[ "u"+tid ]; !ok && !eqIp( me, source ) {
-				log.Debug("Receiving UBlockType Packet")
 				forwarded[ "u"+tid ] = true
 				sendMiner( payload )
 				sendMessage( payload )
+				log.Debug("Receiving UBlockType Packet")
+				log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
 			}
 		break
 
 		case bchainlibs.VBlockType:
 			if _, ok := forwarded[ "v"+tid ]; !ok && !eqIp( me, source ) {
-				log.Debug("Receiving VBlockType Packet")
-				// If there are multiple packets from this type, not sure how to make them different
-				// Maybe with a combo with time and packet ID.
-				//log.Info("BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
 				forwarded[ "v"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
+				log.Debug("Receiving VBlockType Packet")
+				log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
 			}
 		break
 
@@ -222,7 +222,7 @@ func main() {
     me = treesiplibs.SelfieIP()
     log.Info("Good to go, my ip is " + me.String())
 
-    // Lets prepare a address at any address at port 10000
+    // Lets prepare a address at any address at port bchainlibs.RouterPort
     ServerAddr,err := net.ResolveUDPAddr(bchainlibs.Protocol, bchainlibs.RouterPort)
     treesiplibs.CheckError(err, log)
 
