@@ -89,7 +89,7 @@ func attendInputChannel() {
 			forwarded["u"+tid] = true
 			sendMessage( payload )
 			log.Debug("Receiving InternalUBlockType Packet")
-			log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
+			log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			//}
 		break
 
@@ -100,7 +100,7 @@ func attendInputChannel() {
 			sendBlockchain( payload )
 			sendMessage( payload )
 			log.Debug("Receiving InternalVBlockType Packet")
-			log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
+			log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			//}
 		break
 
@@ -110,7 +110,7 @@ func attendInputChannel() {
 				sendMiner( payload )
 				sendMessage( payload )
 				log.Debug("Receiving UBlockType Packet")
-				log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
+				log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			}
 		break
 
@@ -120,7 +120,7 @@ func attendInputChannel() {
 				sendBlockchain( payload )
 				sendMessage( payload )
 				log.Debug("Receiving VBlockType Packet")
-				log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10) + "," + tid)
+				log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			}
 		break
 
@@ -139,7 +139,7 @@ func attendInputChannel() {
 				// This is the start of the query, which later can be queried in MongoDB as the minimal value of this.
 				// Then compared to the maximun I can get the time it took to propagate.
 				// This is fine cause there is just one query
-				log.Info("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10))
+				log.Info("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 				payload.Type = bchainlibs.QueryType
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
@@ -150,7 +150,7 @@ func attendInputChannel() {
 		case bchainlibs.QueryType:
 			if _, ok := forwarded[ "q"+tid ]; !ok && !eqIp( me, source ) {
 				log.Debug("Receiving QueryType Packet")
-				log.Info("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().Unix(), 10))
+				log.Info("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
