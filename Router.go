@@ -32,18 +32,19 @@ var done = make(chan bool)
 
 
 func sendMessage(payload bchainlibs.Packet) {
-	log.Debug("Sending Packet with TID " + payload.TID + " to channel output")
 	bchainlibs.SendGeneric( output, payload, log )
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel output")
+	log.Debug("SEND_MESSAGE=1")
 }
 
 func sendBlockchain(payload bchainlibs.Packet) {
-	log.Debug("Sending Packet with TID " + payload.TID + " to channel blockchain")
 	bchainlibs.SendGeneric( blockchain, payload, log )
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel blockchain")
 }
 
 func sendMiner(payload bchainlibs.Packet) {
-	log.Debug("Sending Packet with TID " + payload.TID + " to channel miner")
 	bchainlibs.SendGeneric( miner, payload, log )
+	log.Debug("Sending Packet with TID " + payload.TID + " to channel miner")
 }
 
 
