@@ -79,7 +79,7 @@ func attendResendingChannel() {
 			missingAck := 0
 			for v, k := range forwarded {
 				if !k {
-					missingAck++
+					missingAck = missingAck + 1
 					log.Debug("Packet " + v + " not acked yet!")
 					sendMessage( packets[v] )
 				}
