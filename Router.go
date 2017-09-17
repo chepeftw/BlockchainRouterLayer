@@ -10,6 +10,7 @@ import (
     "github.com/op/go-logging"
     "github.com/chepeftw/treesiplibs"
 	"github.com/chepeftw/bchainlibs"
+	"fmt"
 )
 
 
@@ -22,18 +23,26 @@ var me net.IP = net.ParseIP(bchainlibs.LocalhostAddr)
 
 // +++++++++ Routing Protocol
 var forwarded map[string]bool = make(map[string]bool)
+var packets map[string]bchainlibs.Packet = make(map[string]bchainlibs.Packet)
 
 // +++++++++ Channels
 var input = make(chan string)
 var output = make(chan string)
 var blockchain = make(chan string)
 var miner = make(chan string)
+var resending = make(chan int)
 var done = make(chan bool)
 
 
 func sendMessage(payload bchainlibs.Packet) {
 	bchainlibs.SendGeneric( output, payload, log )
 	log.Debug("Sending Packet with TID " + payload.TID + " to channel output")
+
+	go func() {
+		time.Sleep( time.Second * time.Duration( 1 ) )
+		log.Debug("RE attendResendingChannel => 1" )
+		resending <- 1
+	}()
 }
 
 func sendBlockchain(payload bchainlibs.Packet) {
@@ -63,6 +72,30 @@ func attendMinerChannel() {
 	bchainlibs.SendToNetwork( me.String(), bchainlibs.MinerPort, miner, false, log, me )
 }
 
+func attendResendingChannel() {
+	log.Debug("Starting resending channel")
+	for {
+		j, more := <-resending
+		if more {
+			missingAck := 0
+			for v, k := range forwarded {
+				if !k {
+					missingAck++
+					log.Debug("Packet " + v + " not acked yet!")
+					sendMessage( packets[v] )
+				}
+			}
+
+			if missingAck > 0 {
+				go func() {
+					time.Sleep( time.Second * time.Duration( 1 ) )
+					log.Debug("RE attendResendingChannel => 1" )
+					resending <- 1
+				}()
+			}
+		}
+	}
+}
 
 // Function that handles the buffer channel
 func attendInputChannel() {
@@ -87,7 +120,8 @@ func attendInputChannel() {
 			log.Debug("Receiving InternalUBlockType Packet")
 			//if eqIp( me, source ) {
 			payload.Type = bchainlibs.UBlockType
-			forwarded["u"+tid] = true
+			forwarded["u"+tid] = false
+			packets["u"+tid] = payload
 			sendMessage( payload )
 			log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			//}
@@ -97,7 +131,8 @@ func attendInputChannel() {
 			log.Debug("Receiving InternalVBlockType Packet")
 			//if eqIp( me, source ) {
 			payload.Type = bchainlibs.VBlockType
-			forwarded["v"+tid] = true
+			forwarded["v"+tid] = false
+			packets["v"+tid] = payload
 			sendBlockchain( payload )
 			sendMessage( payload )
 			log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
@@ -111,6 +146,8 @@ func attendInputChannel() {
 				sendMiner( payload )
 				sendMessage( payload )
 				log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
+			} else if !forwarded[ "u"+tid ] {
+				forwarded[ "u"+tid ] = true
 			}
 		break
 
@@ -121,6 +158,8 @@ func attendInputChannel() {
 				sendBlockchain( payload )
 				sendMessage( payload )
 				log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
+			} else if !forwarded[ "v"+tid ] {
+				forwarded[ "v"+tid ] = true
 			}
 		break
 
@@ -141,7 +180,8 @@ func attendInputChannel() {
 				// This is fine cause there is just one query
 				log.Info("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 				payload.Type = bchainlibs.QueryType
-				forwarded[ "q"+tid ] = true
+				forwarded[ "q"+tid ] = false
+				packets["q"+tid] = payload
 				sendBlockchain( payload )
 				sendMessage( payload )
 			}
@@ -154,6 +194,8 @@ func attendInputChannel() {
 				forwarded[ "q"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
+			} else if !forwarded[ "q"+tid ] {
+				forwarded[ "q"+tid ] = true
 			}
 		break
 
