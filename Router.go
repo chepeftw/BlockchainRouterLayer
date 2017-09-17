@@ -10,7 +10,6 @@ import (
     "github.com/op/go-logging"
     "github.com/chepeftw/treesiplibs"
 	"github.com/chepeftw/bchainlibs"
-	"fmt"
 )
 
 
@@ -75,7 +74,7 @@ func attendMinerChannel() {
 func attendResendingChannel() {
 	log.Debug("Starting resending channel")
 	for {
-		j, more := <-resending
+		_, more := <-resending
 		if more {
 			missingAck := 0
 			for v, k := range forwarded {
@@ -281,6 +280,8 @@ func main() {
 	// Run the Internal channel! The direct messages to the app layer
 	go attendBlockchainChannel()
 	go attendMinerChannel()
+
+	go attendResendingChannel()
 
 	go pingInternals()
 
