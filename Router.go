@@ -34,7 +34,6 @@ var done = make(chan bool)
 func sendMessage(payload bchainlibs.Packet) {
 	bchainlibs.SendGeneric( output, payload, log )
 	log.Debug("Sending Packet with TID " + payload.TID + " to channel output")
-	log.Debug("SEND_MESSAGE=1")
 }
 
 func sendBlockchain(payload bchainlibs.Packet) {
@@ -85,42 +84,42 @@ func attendInputChannel() {
 		switch payload.Type {
 
 		case bchainlibs.InternalUBlockType:
+			log.Debug("Receiving InternalUBlockType Packet")
 			//if eqIp( me, source ) {
 			payload.Type = bchainlibs.UBlockType
 			forwarded["u"+tid] = true
 			sendMessage( payload )
-			log.Debug("Receiving InternalUBlockType Packet")
 			log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			//}
 		break
 
 		case bchainlibs.InternalVBlockType:
+			log.Debug("Receiving InternalVBlockType Packet")
 			//if eqIp( me, source ) {
 			payload.Type = bchainlibs.VBlockType
 			forwarded["v"+tid] = true
 			sendBlockchain( payload )
 			sendMessage( payload )
-			log.Debug("Receiving InternalVBlockType Packet")
 			log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			//}
 		break
 
 		case bchainlibs.UBlockType:
 			if _, ok := forwarded[ "u"+tid ]; !ok && !eqIp( me, source ) {
+				log.Debug("Receiving UBlockType Packet")
 				forwarded[ "u"+tid ] = true
 				sendMiner( payload )
 				sendMessage( payload )
-				log.Debug("Receiving UBlockType Packet")
 				log.Info("U_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			}
 		break
 
 		case bchainlibs.VBlockType:
 			if _, ok := forwarded[ "v"+tid ]; !ok && !eqIp( me, source ) {
+				log.Debug("Receiving VBlockType Packet")
 				forwarded[ "v"+tid ] = true
 				sendBlockchain( payload )
 				sendMessage( payload )
-				log.Debug("Receiving VBlockType Packet")
 				log.Info("V_BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + tid)
 			}
 		break
