@@ -208,6 +208,7 @@ func attendInputChannel() {
 				forwarded["t"+id] = false
 				packets["t"+id] = payload
 
+				sendBlockchain(payload)
 				sendMessage(payload)
 				//log.Debug("TRANSACTION_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + id)
 				break
