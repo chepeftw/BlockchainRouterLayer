@@ -124,6 +124,11 @@ func attendInputChannel() {
 			log.Debug("---------------------------")
 			log.Debug("Something arrived with id = " + id + " and type = " + strconv.Itoa(payload.Type))
 
+			if "" == id {
+				log.Error("Packet has no ID ... weird :(")
+				continue
+			}
+
 			switch payload.Type {
 
 			case bchainlibs.InternalPong:
@@ -168,6 +173,7 @@ func attendInputChannel() {
 					log.Info("Receiving TransactionType Packet")
 					forwarded[ "t"+id ] = true
 					sendBlockchain(payload)
+					sendMiner(payload)
 					sendMessage(payload)
 				} else if !forwarded[ "t"+id ] {
 					forwarded[ "t"+id ] = true
@@ -212,6 +218,7 @@ func attendInputChannel() {
 				packets["t"+id] = payload
 
 				sendBlockchain(payload)
+				sendMiner(payload)
 				sendMessage(payload)
 				//log.Debug("TRANSACTION_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + id)
 				break
