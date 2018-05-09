@@ -121,6 +121,9 @@ func attendInputChannel() {
 			source := payload.Source
 			id := payload.ID
 
+			log.Debug("---------------------------")
+			log.Debug("Something arrived with id = " + id + " and type = " + strconv.Itoa(payload.Type))
+
 			switch payload.Type {
 
 			case bchainlibs.InternalPong:
