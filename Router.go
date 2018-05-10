@@ -9,6 +9,7 @@ import (
 
 	"github.com/op/go-logging"
 	"github.com/chepeftw/bchainlibs"
+	"fmt"
 )
 
 // +++++++++++++++++++++++++++
@@ -17,6 +18,8 @@ import (
 var log = logging.MustGetLogger("router")
 
 var me = net.ParseIP(bchainlibs.LocalhostAddr)
+var sendMsgCount = 0
+var sizeMsgCount = 0
 
 // +++++++++ Routing Protocol
 var forwarded = make(map[string]bool)
@@ -60,10 +63,37 @@ func sendRaft(payload bchainlibs.Packet) {
 // Function that handles the output channel
 func attendOutputChannel() {
 	log.Info("Starting output channel")
-	bchainlibs.SendToNetwork(bchainlibs.BroadcastAddr, bchainlibs.RouterPort, output, true, log, me)
+
+	Server, err := net.ResolveUDPAddr(bchainlibs.Protocol, bchainlibs.BroadcastAddr+bchainlibs.RouterPort)
+	bchainlibs.CheckError(err, log)
+	Local, err := net.ResolveUDPAddr(bchainlibs.Protocol, me.String()+bchainlibs.LocalPort)
+	bchainlibs.CheckError(err, log)
+	Conn, err := net.DialUDP(bchainlibs.Protocol, Local, Server)
+	bchainlibs.CheckError(err, log)
+	defer Conn.Close()
+
+	for {
+		j, more := <-output
+		if more {
+			if Conn != nil {
+				buf := []byte(j)
+				_, err = Conn.Write(buf)
+
+				sizeMsgCount += len(buf)
+				sendMsgCount += 1
+
+				log.Debug(me.String() + " " + j + " MESSAGE_SIZE=" + strconv.Itoa(len(buf)))
+				log.Debug(me.String() + " SENDING_MESSAGE=1")
+				bchainlibs.CheckError(err, log)
+			}
+		} else {
+			fmt.Println("closing channel")
+			return
+		}
+	}
 }
 
-func attendInternalChannel( name string, port string, channel <-chan string ) {
+func attendInternalChannel(name string, port string, channel <-chan string) {
 	log.Info("Starting " + name + " channel")
 	bchainlibs.SendToNetwork(me.String(), port, channel, false, log, me)
 }
@@ -141,7 +171,8 @@ func attendInputChannel() {
 					// This is the start of the query, which later can be queried in MongoDB as the minimal value of this.
 					// Then compared to the maximun I can get the time it took to propagate.
 					// This is fine cause there is just one query
-					log.Debug("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10))
+					log.Debug("QUERY_ID=" + payload.Query.ID)
+					log.Debug("QUERY_TIME_SENT_" + payload.Query.ID + "=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 					payload.Type = bchainlibs.QueryType
 					forwarded[ "q"+id ] = false
 					packets["q"+id] = payload
@@ -151,15 +182,21 @@ func attendInputChannel() {
 				}
 				break
 
-			// ----------------------------
-			// From X
-			// ----------------------------
+				// ----------------------------
+				// From X
+				// ----------------------------
 
 			case bchainlibs.QueryType:
+				sizeMsgCount = 0
+				sendMsgCount = 0
+
 				if _, ok := forwarded[ "q"+id ]; !ok && !eqIp(me, source) {
 					log.Info("Receiving QueryType Packet")
-					log.Debug("QUERY_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10))
+					log.Debug("QUERY_TIME_RECEIVED_" + payload.Query.ID + "=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 					forwarded[ "q"+id ] = true
+
+					payload.Query.Hops = payload.Query.Hops + 1
+					log.Debug("QUERY_HOPS_COUNT=" + strconv.Itoa(payload.Query.Hops))
 
 					sendBlockchain(payload)
 					sendMessage(payload)
@@ -186,15 +223,17 @@ func attendInputChannel() {
 					forwarded[ "b"+id ] = true
 					sendBlockchain(payload)
 					sendMessage(payload)
+
+					log.Debug("QUERY_MESSAGES_SIZE=" + strconv.Itoa(sizeMsgCount))
+					log.Debug("QUERY_MESSAGES_SEND=" + strconv.Itoa(sendMsgCount))
 				} else if !forwarded[ "b"+id ] {
 					forwarded[ "b"+id ] = true
 				}
 				break
 
-
-			// ----------------------------
-			// From Blockchain
-			// ----------------------------
+				// ----------------------------
+				// From Blockchain
+				// ----------------------------
 
 			case bchainlibs.LastBlockType:
 				log.Info("Receiving LastBlockType Packet")
@@ -223,10 +262,9 @@ func attendInputChannel() {
 				//log.Debug("TRANSACTION_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + id)
 				break
 
-
-			// ----------------------------
-			// From Miner
-			// ----------------------------
+				// ----------------------------
+				// From Miner
+				// ----------------------------
 
 			case bchainlibs.InternalBlockType:
 				log.Info("Receiving InternalBlockType Packet")
@@ -240,10 +278,9 @@ func attendInputChannel() {
 				//log.Debug("BLOCK_TIME_RECEIVED=" + strconv.FormatInt(time.Now().UnixNano(), 10) + "," + id)
 				break
 
-
-			// ----------------------------
-			// From Raft
-			// ----------------------------
+				// ----------------------------
+				// From Raft
+				// ----------------------------
 
 			case bchainlibs.RaftResult:
 				log.Info("Receiving ResultFromElection Packet")
