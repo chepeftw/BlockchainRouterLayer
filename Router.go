@@ -196,7 +196,7 @@ func attendInputChannel() {
 					forwarded[ "q"+id ] = true
 
 					payload.Query.Hops = payload.Query.Hops + 1
-					log.Debug("QUERY_HOPS_COUNT=" + strconv.Itoa(payload.Query.Hops))
+					log.Debug("QUERY_HOPS_COUNT_" + payload.Query.ID + "=" + strconv.Itoa(payload.Query.Hops))
 
 					sendBlockchain(payload)
 					sendMessage(payload)
@@ -224,8 +224,7 @@ func attendInputChannel() {
 					sendBlockchain(payload)
 					sendMessage(payload)
 
-					log.Debug("QUERY_MESSAGES_SIZE=" + strconv.Itoa(sizeMsgCount))
-					log.Debug("QUERY_MESSAGES_SEND=" + strconv.Itoa(sendMsgCount))
+					log.Debug("QUERY_MESSAGES_SIZE=" + strconv.Itoa(sizeMsgCount) + "|||| QUERY_MESSAGES_SEND=" + strconv.Itoa(sendMsgCount))
 				} else if !forwarded[ "b"+id ] {
 					forwarded[ "b"+id ] = true
 				}
