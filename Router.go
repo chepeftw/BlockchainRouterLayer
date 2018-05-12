@@ -36,11 +36,11 @@ var done = make(chan bool)
 
 func sendMessage(payload bchainlibs.Packet) {
 	bchainlibs.SendGeneric(output, payload, log)
-	log.Debug("Sending Packet with ID " + payload.ID + " to channel output")
+	log.Info("Sending Packet with ID " + payload.ID + " to channel output")
 
 	go func() {
 		time.Sleep(time.Second * time.Duration(1))
-		log.Debug("RE attendResendingChannel => 1")
+		log.Info("RE attendResendingChannel => 1")
 		resending <- 1
 	}()
 }
