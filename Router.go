@@ -193,7 +193,7 @@ func attendInputChannel() {
 				if _, ok := forwarded[ "q"+id ]; !ok && !eqIp(me, source) {
 					log.Info("Receiving QueryType Packet")
 					log.Debug("QUERY_TIME_RECEIVED_" + payload.Query.ID + "=" + strconv.FormatInt(time.Now().UnixNano(), 10))
-					forwarded[ "q"+id ] = true
+					forwarded[ "q"+id ] = false
 
 					payload.Query.Hops = payload.Query.Hops + 1
 					log.Debug("QUERY_HOPS_COUNT_" + payload.Query.ID + "=" + strconv.Itoa(payload.Query.Hops))
@@ -208,7 +208,7 @@ func attendInputChannel() {
 			case bchainlibs.TransactionType:
 				if _, ok := forwarded[ "t"+id ]; !ok && !eqIp(me, source) {
 					log.Info("Receiving TransactionType Packet")
-					forwarded[ "t"+id ] = true
+					forwarded[ "t"+id ] = false
 					sendBlockchain(payload)
 					sendMiner(payload)
 					sendMessage(payload)
@@ -220,7 +220,7 @@ func attendInputChannel() {
 			case bchainlibs.BlockType:
 				if _, ok := forwarded[ "b"+id ]; !ok && !eqIp(me, source) {
 					log.Info("Receiving BlockType Packet")
-					forwarded[ "b"+id ] = true
+					forwarded[ "b"+id ] = false
 					sendBlockchain(payload)
 					sendMessage(payload)
 
