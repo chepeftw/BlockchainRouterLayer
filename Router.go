@@ -224,6 +224,7 @@ func attendInputChannel() {
 					sendBlockchain(payload)
 					sendMessage(payload)
 
+					log.Debug("BLOCK_TIME_RECEIVED_" + payload.Block.QueryID + "=" + strconv.FormatInt(time.Now().UnixNano(), 10))
 					log.Debug("QUERY_MESSAGES_SIZE=" + strconv.Itoa(sizeMsgCount) + "|||| QUERY_MESSAGES_SEND=" + strconv.Itoa(sendMsgCount))
 				} else if !forwarded[ "b"+id ] {
 					forwarded[ "b"+id ] = true
